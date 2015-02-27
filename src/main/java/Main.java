@@ -3,15 +3,12 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.event.EventHandler;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
@@ -34,11 +31,9 @@ public class Main extends Application {
     private SimpleDoubleProperty endYLeftPaddle;
     private SimpleDoubleProperty startYRightPaddle;
     private SimpleDoubleProperty endYRightPaddle;
-    private SimpleIntegerProperty xValue;
-    private SimpleIntegerProperty yValue;
     private Text title;
     private Timeline timeline;
-    private Circle circle;
+    private Ball ball;
 
     public static void main(String[] args) {
         launch(args);
@@ -51,15 +46,13 @@ public class Main extends Application {
         Line leftPaddle = new Line(PADDLE_PADDING, 0, PADDLE_PADDING, 0);
         Line rightPaddle = new Line(MAX_WIDTH - PADDLE_PADDING, 0, MAX_WIDTH - PADDLE_PADDING, 0);
         initPaddleProperties(leftPaddle, rightPaddle);
-
-        circle = new Circle(10, 10, BALL_RADIUS);
-        circle.setFill(Color.RED);
-        initCircleProperties(circle);
+        ball = new Ball();
 
         startTimeline();
         title = new Text("Start");
-        title.setStyle("-fx-min-height: 50px");
-        Group group = new Group(circle, leftPaddle, rightPaddle);
+        title.setStyle("-fx-min-height: 50px; -fx-font-weight: bold; " +
+                "-fx-text-alignment: center; -fx-background-color: cornflowerblue");
+        Group group = new Group(ball, leftPaddle, rightPaddle);
         Pane pane = new Pane(group);
         pane.setStyle("-fx-background-color: lightsteelblue");
         pane.setOnKeyPressed(createPaddleKeyEvent());
@@ -80,36 +73,41 @@ public class Main extends Application {
         return event -> {
             System.out.println(("keyPressed: " + event.getText()));
             if (event.getText().equals("s")) {
-                startYLeftPaddle.setValue(startYLeftPaddle.getValue() + PADDLE_MOVE_STEP);
-                endYLeftPaddle.setValue(endYLeftPaddle.getValue() + PADDLE_MOVE_STEP);
+                if (isPaddleEndStillInside()) {
+                    startYLeftPaddle.setValue(startYLeftPaddle.getValue() + PADDLE_MOVE_STEP);
+                    endYLeftPaddle.setValue(endYLeftPaddle.getValue() + PADDLE_MOVE_STEP);
+                }
             } else if (event.getText().equals("w")) {
-                startYLeftPaddle.setValue(startYLeftPaddle.getValue() - PADDLE_MOVE_STEP);
-                endYLeftPaddle.setValue(endYLeftPaddle.getValue() - PADDLE_MOVE_STEP);
+                if (isPaddleStartStillInside()) {
+                    startYLeftPaddle.setValue(startYLeftPaddle.getValue() - PADDLE_MOVE_STEP);
+                    endYLeftPaddle.setValue(endYLeftPaddle.getValue() - PADDLE_MOVE_STEP);
+                }
             } else if (event.getText().equals("n")) {
                 title.setText("start again honey");
-                xValue.setValue(10);
-                yValue.setValue(10);
+                ball.setXValue(10);
+                ball.setYValue(10);
                 timeline.playFromStart();
             }
         };
     }
 
+    private boolean isPaddleStartStillInside() {
+        return startYLeftPaddle.getValue() - PADDLE_MOVE_STEP >= 0;
+    }
+
+    private boolean isPaddleEndStillInside() {
+        return endYLeftPaddle.getValue() + PADDLE_MOVE_STEP <= MAX_HEIGHT;
+    }
+
     private void startTimeline() {
         EventHandler onFinished = event -> {
-            handleBallMovement(xValue, yValue);
+            handleBallMovement(ball.getXValue(), ball.getYValue());
         };
         timeline = new Timeline();
         timeline.setCycleCount(Animation.INDEFINITE);
         KeyFrame keyFrame = new KeyFrame(Duration.millis(5), onFinished);
         timeline.getKeyFrames().add(keyFrame);
         timeline.play();
-    }
-
-    private void initCircleProperties(Circle circle) {
-        xValue = new SimpleIntegerProperty(10);
-        yValue = new SimpleIntegerProperty(20);
-        circle.centerXProperty().bind(xValue);
-        circle.centerYProperty().bind(yValue);
     }
 
     private void initPaddleProperties(Line leftPaddle, Line rightPaddle) {
@@ -123,46 +121,36 @@ public class Main extends Application {
         rightPaddle.endYProperty().bind(endYRightPaddle);
     }
 
-    private void handleBallMovement(SimpleIntegerProperty xValue, SimpleIntegerProperty yValue) {
+    private void handleBallMovement(double xValue, double yValue) {
         if (isLeftPaddleHit(xValue, yValue)) {
             directionRight = true;
         } else {
             directionRight = checkXDirection(xValue, directionRight, MAX_WIDTH);
             directionDown = checkVerticalDirection(yValue, directionDown, MAX_HEIGHT);
         }
-        double newX = getNextPosition(xValue, directionRight, HORIZONTAL_STEP);
-        double newY = getNextPosition(yValue, directionDown, VERTICAL_STEP);
-        xValue.setValue(newX);
-        yValue.setValue(newY);
+        double newX = ball.getNextPosition(xValue, directionRight, HORIZONTAL_STEP);
+        double newY = ball.getNextPosition(yValue, directionDown, VERTICAL_STEP);
+        ball.setXValue(newX);
+        ball.setYValue(newY);
     }
 
-    private boolean isLeftPaddleHit(SimpleIntegerProperty xValue, SimpleIntegerProperty yValue) {
-        if (PADDLE_PADDING + BALL_RADIUS == xValue.getValue()
-                && yValue.getValue() > startYLeftPaddle.getValue() - BALL_RADIUS
-                && yValue.getValue() < endYLeftPaddle.getValue() + BALL_RADIUS) {
+    private boolean isLeftPaddleHit(double xValue, double yValue) {
+        if (PADDLE_PADDING + BALL_RADIUS == ball.getXValue()
+                && ball.getYValue() > startYLeftPaddle.getValue() - BALL_RADIUS
+                && ball.getYValue() < endYLeftPaddle.getValue() + BALL_RADIUS) {
             System.out.println("HIT!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             return true;
         }
         return false;
     }
 
-    private double getNextPosition(SimpleIntegerProperty positionValue, boolean direction, double step) {
-        double newPositionValue;
+    private boolean checkXDirection(double positionValue, Boolean direction, int maxValue) {
         if (direction) {
-            newPositionValue = positionValue.getValue() + step;
-        } else {
-            newPositionValue = positionValue.getValue() - step;
-        }
-        return newPositionValue;
-    }
-
-    private boolean checkXDirection(SimpleIntegerProperty positionValue, Boolean direction, int maxValue) {
-        if (direction) {
-            if (positionValue.getValue() + 1 >= maxValue) {
+            if (positionValue + 1 >= maxValue) {
                 return false;
             }
         } else {
-            if (positionValue.getValue() - 1 <= 0) {
+            if (positionValue - 1 <= 0) {
                 System.out.println("LOOSYYYY!!!!");
                 title.setText("Sweety, you loose!");
                 timeline.stop();
@@ -172,13 +160,13 @@ public class Main extends Application {
         return direction;
     }
 
-    private boolean checkVerticalDirection(SimpleIntegerProperty positionValue, Boolean direction, int maxValue) {
+    private boolean checkVerticalDirection(double positionValue, Boolean direction, int maxValue) {
         if (direction) {
-            if (positionValue.getValue() + 1 >= maxValue - BALL_RADIUS) {
+            if (positionValue + 1 >= maxValue - BALL_RADIUS) {
                 return false;
             }
         } else {
-            if (positionValue.getValue() - 1 <= 0 + BALL_RADIUS) {
+            if (positionValue - 1 <= 0 + BALL_RADIUS) {
                 return true;
             }
         }
