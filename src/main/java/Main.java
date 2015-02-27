@@ -99,7 +99,7 @@ public class Main extends Application {
             directionRight = true;
         } else {
             directionRight = getHorizontalDirection();
-            directionDown = getVerticalDirection(yValue, directionDown, MAX_HEIGHT);
+            directionDown = getVerticalDirection();
         }
         double newX = ball.getNextPosition(xValue, directionRight, HORIZONTAL_STEP);
         double newY = ball.getNextPosition(yValue, directionDown, VERTICAL_STEP);
@@ -137,15 +137,19 @@ public class Main extends Application {
         return directionRight;
     }
 
-    private boolean getVerticalDirection(double positionValue, Boolean directionDown, int maxValue) {
-        if (directionDown) {
-            if (positionValue + 1 >= maxValue - BALL_RADIUS) {
-                return false;
-            }
-        } else {
-            if (positionValue - 1 <= BALL_RADIUS) {
-                return true;
-            }
+    private boolean isBallCollisionTop() {
+        return !directionDown && ball.getYValue() - 1 <= BALL_RADIUS;
+    }
+
+    private boolean isBallCollisionBottom() {
+        return directionDown && ball.getYValue() + 1 >= MAX_HEIGHT - BALL_RADIUS;
+    }
+
+    private boolean getVerticalDirection() {
+        if (isBallCollisionBottom()) {
+            return false;
+        } else if (isBallCollisionTop()) {
+            return true;
         }
         return directionDown;
     }
