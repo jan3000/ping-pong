@@ -24,18 +24,31 @@ public class Ball extends Circle {
     }
 
     public void reset() {
-        this.xValue.setValue(10);
-        this.yValue.setValue(10);
+        xValue.setValue(10);
+        yValue.setValue(10);
+        setDirectionRight(true);
+        setDirectionDown(true);
     }
 
-    public double getNextPosition(double positionValue, boolean direction, double step) {
-        double newPositionValue;
-        if (direction) {
-            newPositionValue = positionValue + step;
+    public void move() {
+        setNextXPosition();
+        setNextYPosition();
+    }
+
+    public void setNextXPosition() {
+        if (directionRight) {
+            setXValue(getXValue() + HORIZONTAL_STEP);
         } else {
-            newPositionValue = positionValue - step;
+            setXValue(getXValue() - HORIZONTAL_STEP);
         }
-        return newPositionValue;
+    }
+
+    public void setNextYPosition() {
+        if (directionDown) {
+            setYValue(getYValue() + VERTICAL_STEP);
+        } else {
+            setYValue(getYValue() - VERTICAL_STEP);
+        }
     }
 
     public boolean isDirectionRight() {

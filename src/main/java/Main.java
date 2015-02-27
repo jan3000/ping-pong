@@ -1,5 +1,3 @@
-import domain.Ball;
-import domain.Paddle;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -13,6 +11,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import service.GameService;
 
 public class Main extends Application {
 
@@ -20,17 +19,11 @@ public class Main extends Application {
     public static final int MAX_HEIGHT = 300;
     public static final int PADDLE_LENGTH = 60;
     public static final int PADDLE_PADDING = 30;
-    public static final int BALL_RADIUS = 10;
     public static final int TITLE_HEIGHT = 50;
-    private static final int HORIZONTAL_STEP = 1;
-    private static final int VERTICAL_STEP = 1;
-    private boolean directionRight = true;
-    private boolean directionDown = true;
+
+    private GameService gameService;
     private Text title;
     private Timeline timeline;
-    private Ball ball;
-    private Paddle leftPaddle;
-    private Paddle rightPaddle;
 
     public static void main(String[] args) {
         launch(args);
@@ -40,15 +33,13 @@ public class Main extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        leftPaddle = new Paddle(PADDLE_PADDING, MAX_HEIGHT / 2, PADDLE_PADDING, MAX_HEIGHT / 2 + PADDLE_LENGTH);
-        rightPaddle = new Paddle(MAX_WIDTH - PADDLE_PADDING, MAX_HEIGHT / 2, MAX_WIDTH - PADDLE_PADDING, MAX_HEIGHT / 2 + PADDLE_LENGTH);
-        ball = new Ball(10, 20);
+        gameService = new GameService(MAX_HEIGHT, MAX_WIDTH, PADDLE_PADDING, PADDLE_LENGTH);
 
         startTimeline();
         title = new Text("Start");
         title.setStyle("-fx-min-height: 50px; -fx-font-weight: bold; " +
                 "-fx-text-alignment: center; -fx-background-color: cornflowerblue");
-        Group group = new Group(ball, leftPaddle, rightPaddle);
+        Group group = new Group(gameService.getNodes());
         Pane pane = new Pane(group);
         pane.setStyle("-fx-background-color: lightsteelblue");
         pane.setOnKeyPressed(createPaddleKeyEvent());
@@ -71,13 +62,13 @@ public class Main extends Application {
             System.out.println(("key: " + key));
             switch (key) {
                 case "s":
-                    leftPaddle.movePaddleDown(MAX_HEIGHT);
+                    gameService.moveLeftPaddleDown();
                     break;
                 case "w":
-                    leftPaddle.movePaddleUp();
+                    gameService.moveLeftPaddleUp();
                     break;
                 case "n":
-                    ball.reset();
+                    gameService.reset();
                     title.setText("start again honey");
                     timeline.playFromStart();
                     break;
@@ -86,71 +77,20 @@ public class Main extends Application {
     }
 
     private void startTimeline() {
-        EventHandler onFinished = event -> handleBallMovement(ball.getXValue(), ball.getYValue());
+        EventHandler onFinished = event -> {
+            gameService.moveBall();
+            if (gameService.isBallLost()) {
+                System.out.println("LOOSYYYY!!!!");
+                title.setText("Sweety, you loose!");
+                timeline.stop();
+            }
+            ;
+        };
+
         timeline = new Timeline();
         timeline.setCycleCount(Animation.INDEFINITE);
         KeyFrame keyFrame = new KeyFrame(Duration.millis(5), onFinished);
         timeline.getKeyFrames().add(keyFrame);
         timeline.play();
-    }
-
-    private void handleBallMovement(double xValue, double yValue) {
-        if (isLeftPaddleHit()) {
-            directionRight = true;
-        } else {
-            directionRight = getHorizontalDirection();
-            directionDown = getVerticalDirection();
-        }
-        double newX = ball.getNextPosition(xValue, directionRight, HORIZONTAL_STEP);
-        double newY = ball.getNextPosition(yValue, directionDown, VERTICAL_STEP);
-        ball.setXValue(newX);
-        ball.setYValue(newY);
-    }
-
-    private boolean isLeftPaddleHit() {
-        if (PADDLE_PADDING + BALL_RADIUS == ball.getXValue()
-                && ball.getYValue() > leftPaddle.getStartYProperty() - BALL_RADIUS
-                && ball.getYValue() < leftPaddle.getEndYProperty() + BALL_RADIUS) {
-            System.out.println("HIT!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-            return true;
-        }
-        return false;
-    }
-
-    private boolean isBallCollisionRight() {
-        return directionRight && ball.getXValue() + 1 >= MAX_WIDTH;
-    }
-
-    private boolean isBallCollisionLeft() {
-        return !directionRight && ball.getXValue() - 1 <= 0;
-    }
-
-    private boolean getHorizontalDirection() {
-        if (isBallCollisionRight()) {
-            return false;
-        } else if (isBallCollisionLeft()) {
-            System.out.println("LOOSYYYY!!!!");
-            title.setText("Sweety, you loose!");
-            timeline.stop();
-            return true;
-        }
-        return directionRight;
-    }
-
-    private boolean isBallCollisionTop() {
-        return !directionDown && ball.getYValue() - 1 <= BALL_RADIUS;
-    }
-
-    private boolean isBallCollisionBottom() {
-        return directionDown && ball.getYValue() + 1 >= MAX_HEIGHT - BALL_RADIUS;
-    }
-
-    private boolean getVerticalDirection() {
-        if (isBallCollisionBottom()) {
-            return false;
-        } else if (isBallCollisionTop()) {
-            return true;
-        }
-        return directionDown;
     }
 }
