@@ -1,3 +1,5 @@
+package domain;
+
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -7,18 +9,23 @@ public class Ball extends Circle {
     private static final int HORIZONTAL_STEP = 1;
     private static final int VERTICAL_STEP = 1;
     private static final int BALL_RADIUS = 10;
-    private SimpleDoubleProperty xValue;
-    private SimpleDoubleProperty yValue;
+    private SimpleDoubleProperty xValue = new SimpleDoubleProperty();
+    private SimpleDoubleProperty yValue = new SimpleDoubleProperty();
     private boolean directionRight = true;
     private boolean directionDown = true;
 
-    public Ball() {
+    public Ball(int xValue, int yValue) {
         super(10, 10, BALL_RADIUS);
         this.setFill(Color.BLACK);
-        xValue = new SimpleDoubleProperty(10);
-        yValue = new SimpleDoubleProperty(20);
-        this.centerXProperty().bind(xValue);
-        this.centerYProperty().bind(yValue);
+        this.xValue.setValue(xValue);
+        this.yValue.setValue(yValue);
+        this.centerXProperty().bind(this.xValue);
+        this.centerYProperty().bind(this.yValue);
+    }
+
+    public void reset() {
+        this.xValue.setValue(10);
+        this.yValue.setValue(10);
     }
 
     public double getNextPosition(double positionValue, boolean direction, double step) {
@@ -73,7 +80,7 @@ public class Ball extends Circle {
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("Ball{");
+        final StringBuffer sb = new StringBuffer("domain.Ball{");
         sb.append("xValue=").append(xValue);
         sb.append(", yValue=").append(yValue);
         sb.append(", directionRight=").append(directionRight);

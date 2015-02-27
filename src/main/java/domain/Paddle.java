@@ -1,3 +1,5 @@
+package domain;
+
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.shape.Line;
 
@@ -18,13 +20,25 @@ public class Paddle extends Line {
     }
 
     public void movePaddleUp() {
-        startYProperty.setValue(startYProperty.getValue() - PADDLE_MOVE_STEP);
-        endYProperty.setValue(endYProperty.getValue() - PADDLE_MOVE_STEP);
+        if (!isTopReached()) {
+            startYProperty.setValue(startYProperty.getValue() - PADDLE_MOVE_STEP);
+            endYProperty.setValue(endYProperty.getValue() - PADDLE_MOVE_STEP);
+        }
     }
 
-    public void movePaddleDown() {
-        startYProperty.setValue(startYProperty.getValue() + PADDLE_MOVE_STEP);
-        endYProperty.setValue(endYProperty.getValue() + PADDLE_MOVE_STEP);
+    public void movePaddleDown(int bottomPosition) {
+        if (!isBottomReached(bottomPosition)) {
+            startYProperty.setValue(startYProperty.getValue() + PADDLE_MOVE_STEP);
+            endYProperty.setValue(endYProperty.getValue() + PADDLE_MOVE_STEP);
+        }
+    }
+
+    public boolean isTopReached() {
+        return getStartYProperty() <= 0;
+    }
+
+    public boolean isBottomReached(int bottomPosition) {
+        return getEndYProperty() >= bottomPosition;
     }
 
     public double getStartYProperty() {

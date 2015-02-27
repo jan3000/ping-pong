@@ -1,3 +1,5 @@
+import domain.Ball;
+import domain.Paddle;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -18,7 +20,6 @@ public class Main extends Application {
     public static final int MAX_HEIGHT = 300;
     public static final int PADDLE_LENGTH = 60;
     public static final int PADDLE_PADDING = 30;
-    public static final int PADDLE_MOVE_STEP = 15;
     public static final int BALL_RADIUS = 10;
     public static final int TITLE_HEIGHT = 50;
     private static final int HORIZONTAL_STEP = 1;
@@ -41,7 +42,7 @@ public class Main extends Application {
     public void start(Stage stage) throws Exception {
         leftPaddle = new Paddle(PADDLE_PADDING, MAX_HEIGHT / 2, PADDLE_PADDING, MAX_HEIGHT / 2 + PADDLE_LENGTH);
         rightPaddle = new Paddle(MAX_WIDTH - PADDLE_PADDING, MAX_HEIGHT / 2, MAX_WIDTH - PADDLE_PADDING, MAX_HEIGHT / 2 + PADDLE_LENGTH);
-        ball = new Ball();
+        ball = new Ball(10, 20);
 
         startTimeline();
         title = new Text("Start");
@@ -66,36 +67,26 @@ public class Main extends Application {
 
     private EventHandler<KeyEvent> createPaddleKeyEvent() {
         return event -> {
-            System.out.println(("keyPressed: " + event.getText()));
-            if (event.getText().equals("s")) {
-                if (isPaddleEndStillInside()) {
-                    leftPaddle.movePaddleDown();
-                }
-            } else if (event.getText().equals("w")) {
-                if (isPaddleStartStillInside()) {
+            String key = event.getText();
+            System.out.println(("key: " + key));
+            switch (key) {
+                case "s":
+                    leftPaddle.movePaddleDown(MAX_HEIGHT);
+                    break;
+                case "w":
                     leftPaddle.movePaddleUp();
-                }
-            } else if (event.getText().equals("n")) {
-                title.setText("start again honey");
-                ball.setXValue(10);
-                ball.setYValue(10);
-                timeline.playFromStart();
+                    break;
+                case "n":
+                    ball.reset();
+                    title.setText("start again honey");
+                    timeline.playFromStart();
+                    break;
             }
         };
     }
 
-    private boolean isPaddleStartStillInside() {
-        return leftPaddle.getStartYProperty() - PADDLE_MOVE_STEP >= 0;
-    }
-
-    private boolean isPaddleEndStillInside() {
-        return leftPaddle.getEndYProperty() + PADDLE_MOVE_STEP <= MAX_HEIGHT;
-    }
-
     private void startTimeline() {
-        EventHandler onFinished = event -> {
-            handleBallMovement(ball.getXValue(), ball.getYValue());
-        };
+        EventHandler onFinished = event -> handleBallMovement(ball.getXValue(), ball.getYValue());
         timeline = new Timeline();
         timeline.setCycleCount(Animation.INDEFINITE);
         KeyFrame keyFrame = new KeyFrame(Duration.millis(5), onFinished);
@@ -107,8 +98,8 @@ public class Main extends Application {
         if (isLeftPaddleHit()) {
             directionRight = true;
         } else {
-            directionRight = checkXDirection(xValue, directionRight, MAX_WIDTH);
-            directionDown = checkVerticalDirection(yValue, directionDown, MAX_HEIGHT);
+            directionRight = getHorizontalDirection();
+            directionDown = getVerticalDirection(yValue, directionDown, MAX_HEIGHT);
         }
         double newX = ball.getNextPosition(xValue, directionRight, HORIZONTAL_STEP);
         double newY = ball.getNextPosition(yValue, directionDown, VERTICAL_STEP);
@@ -126,32 +117,36 @@ public class Main extends Application {
         return false;
     }
 
-    private boolean checkXDirection(double positionValue, Boolean direction, int maxValue) {
-        if (direction) {
-            if (positionValue + 1 >= maxValue) {
-                return false;
-            }
-        } else {
-            if (positionValue - 1 <= 0) {
-                System.out.println("LOOSYYYY!!!!");
-                title.setText("Sweety, you loose!");
-                timeline.stop();
-                return true;
-            }
-        }
-        return direction;
+    private boolean isBallCollisionRight() {
+        return directionRight && ball.getXValue() + 1 >= MAX_WIDTH;
     }
 
-    private boolean checkVerticalDirection(double positionValue, Boolean direction, int maxValue) {
-        if (direction) {
+    private boolean isBallCollisionLeft() {
+        return !directionRight && ball.getXValue() - 1 <= 0;
+    }
+
+    private boolean getHorizontalDirection() {
+        if (isBallCollisionRight()) {
+            return false;
+        } else if (isBallCollisionLeft()) {
+            System.out.println("LOOSYYYY!!!!");
+            title.setText("Sweety, you loose!");
+            timeline.stop();
+            return true;
+        }
+        return directionRight;
+    }
+
+    private boolean getVerticalDirection(double positionValue, Boolean directionDown, int maxValue) {
+        if (directionDown) {
             if (positionValue + 1 >= maxValue - BALL_RADIUS) {
                 return false;
             }
         } else {
-            if (positionValue - 1 <= 0 + BALL_RADIUS) {
+            if (positionValue - 1 <= BALL_RADIUS) {
                 return true;
             }
         }
-        return direction;
+        return directionDown;
     }
 }
