@@ -2,14 +2,12 @@ import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.event.EventHandler;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
-import javafx.scene.shape.Line;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -27,13 +25,11 @@ public class Main extends Application {
     private static final int VERTICAL_STEP = 1;
     private boolean directionRight = true;
     private boolean directionDown = true;
-    private SimpleDoubleProperty startYLeftPaddle;
-    private SimpleDoubleProperty endYLeftPaddle;
-    private SimpleDoubleProperty startYRightPaddle;
-    private SimpleDoubleProperty endYRightPaddle;
     private Text title;
     private Timeline timeline;
     private Ball ball;
+    private Paddle leftPaddle;
+    private Paddle rightPaddle;
 
     public static void main(String[] args) {
         launch(args);
@@ -43,9 +39,8 @@ public class Main extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        Line leftPaddle = new Line(PADDLE_PADDING, 0, PADDLE_PADDING, 0);
-        Line rightPaddle = new Line(MAX_WIDTH - PADDLE_PADDING, 0, MAX_WIDTH - PADDLE_PADDING, 0);
-        initPaddleProperties(leftPaddle, rightPaddle);
+        leftPaddle = new Paddle(PADDLE_PADDING, MAX_HEIGHT / 2, PADDLE_PADDING, MAX_HEIGHT / 2 + PADDLE_LENGTH);
+        rightPaddle = new Paddle(MAX_WIDTH - PADDLE_PADDING, MAX_HEIGHT / 2, MAX_WIDTH - PADDLE_PADDING, MAX_HEIGHT / 2 + PADDLE_LENGTH);
         ball = new Ball();
 
         startTimeline();
@@ -74,13 +69,11 @@ public class Main extends Application {
             System.out.println(("keyPressed: " + event.getText()));
             if (event.getText().equals("s")) {
                 if (isPaddleEndStillInside()) {
-                    startYLeftPaddle.setValue(startYLeftPaddle.getValue() + PADDLE_MOVE_STEP);
-                    endYLeftPaddle.setValue(endYLeftPaddle.getValue() + PADDLE_MOVE_STEP);
+                    leftPaddle.movePaddleDown();
                 }
             } else if (event.getText().equals("w")) {
                 if (isPaddleStartStillInside()) {
-                    startYLeftPaddle.setValue(startYLeftPaddle.getValue() - PADDLE_MOVE_STEP);
-                    endYLeftPaddle.setValue(endYLeftPaddle.getValue() - PADDLE_MOVE_STEP);
+                    leftPaddle.movePaddleUp();
                 }
             } else if (event.getText().equals("n")) {
                 title.setText("start again honey");
@@ -92,11 +85,11 @@ public class Main extends Application {
     }
 
     private boolean isPaddleStartStillInside() {
-        return startYLeftPaddle.getValue() - PADDLE_MOVE_STEP >= 0;
+        return leftPaddle.getStartYProperty() - PADDLE_MOVE_STEP >= 0;
     }
 
     private boolean isPaddleEndStillInside() {
-        return endYLeftPaddle.getValue() + PADDLE_MOVE_STEP <= MAX_HEIGHT;
+        return leftPaddle.getEndYProperty() + PADDLE_MOVE_STEP <= MAX_HEIGHT;
     }
 
     private void startTimeline() {
@@ -110,19 +103,8 @@ public class Main extends Application {
         timeline.play();
     }
 
-    private void initPaddleProperties(Line leftPaddle, Line rightPaddle) {
-        startYLeftPaddle = new SimpleDoubleProperty(MAX_HEIGHT / 2);
-        endYLeftPaddle = new SimpleDoubleProperty(MAX_HEIGHT / 2 + PADDLE_LENGTH);
-        leftPaddle.startYProperty().bind(startYLeftPaddle);
-        leftPaddle.endYProperty().bind(endYLeftPaddle);
-        startYRightPaddle = new SimpleDoubleProperty(MAX_HEIGHT / 2);
-        endYRightPaddle = new SimpleDoubleProperty(MAX_HEIGHT / 2 + PADDLE_LENGTH);
-        rightPaddle.startYProperty().bind(startYRightPaddle);
-        rightPaddle.endYProperty().bind(endYRightPaddle);
-    }
-
     private void handleBallMovement(double xValue, double yValue) {
-        if (isLeftPaddleHit(xValue, yValue)) {
+        if (isLeftPaddleHit()) {
             directionRight = true;
         } else {
             directionRight = checkXDirection(xValue, directionRight, MAX_WIDTH);
@@ -134,10 +116,10 @@ public class Main extends Application {
         ball.setYValue(newY);
     }
 
-    private boolean isLeftPaddleHit(double xValue, double yValue) {
+    private boolean isLeftPaddleHit() {
         if (PADDLE_PADDING + BALL_RADIUS == ball.getXValue()
-                && ball.getYValue() > startYLeftPaddle.getValue() - BALL_RADIUS
-                && ball.getYValue() < endYLeftPaddle.getValue() + BALL_RADIUS) {
+                && ball.getYValue() > leftPaddle.getStartYProperty() - BALL_RADIUS
+                && ball.getYValue() < leftPaddle.getEndYProperty() + BALL_RADIUS) {
             System.out.println("HIT!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             return true;
         }
