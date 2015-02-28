@@ -3,18 +3,22 @@ package service;
 import com.google.common.collect.Lists;
 import domain.Ball;
 import domain.Paddle;
+import enumeration.Player;
 import javafx.scene.Node;
 
 import java.util.List;
 
 public class GameService {
 
+    public static final int WINNING_SCORE = 10;
     private Ball ball;
     private Paddle leftPaddle;
     private Paddle rightPaddle;
     private int paddlePadding;
     private int maxWidth;
     private int maxHeight;
+    private int scoreLeft;
+    private int scoreRight;
 
     public GameService(int width, int height, int paddlePadding, int paddleLength) {
         this.paddlePadding = paddlePadding;
@@ -23,6 +27,8 @@ public class GameService {
         leftPaddle = new Paddle(paddlePadding, height / 2, paddlePadding, height / 2 + paddleLength);
         rightPaddle = new Paddle(width - paddlePadding, height / 2, width - paddlePadding, height / 2 + paddleLength);
         ball = new Ball(10, 10);
+        scoreLeft = 0;
+        scoreRight = 0;
     }
 
     public List<Node> getNodes() {
@@ -70,7 +76,6 @@ public class GameService {
         if (paddlePadding + ball.getRadius() == ball.getXValue()
                 && ball.getYValue() > leftPaddle.getStartYProperty() - ball.getRadius()
                 && ball.getYValue() < leftPaddle.getEndYProperty() + ball.getRadius()) {
-            System.out.println("HIT Left!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             return true;
         }
         return false;
@@ -80,12 +85,30 @@ public class GameService {
         if (maxWidth - paddlePadding - ball.getRadius() == ball.getXValue()
                 && ball.getYValue() > rightPaddle.getStartYProperty() - ball.getRadius()
                 && ball.getYValue() < rightPaddle.getEndYProperty() + ball.getRadius()) {
-            System.out.println("HIT right!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             return true;
         }
         return false;
     }
 
+    public Player checkForPoint() {
+        if (isBallCollisionLeft()) {
+            scoreRight++;
+            return Player.PLAYER_LEFT;
+        } else if (isBallCollisionRight()) {
+            scoreLeft++;
+            return Player.PLAYER_RIGHT;
+        }
+        return null;
+    }
+
+    public Player checkForWinner() {
+        if (scoreLeft >= WINNING_SCORE) {
+            return Player.PLAYER_LEFT;
+        } else if (scoreRight >= WINNING_SCORE) {
+            return Player.PLAYER_RIGHT;
+        }
+        return null;
+    }
 
     public boolean isBallCollisionRight() {
         return ball.isDirectionRight() && ball.getXValue() + 1 >= maxWidth;
@@ -113,5 +136,13 @@ public class GameService {
 
     public Paddle getRightPaddle() {
         return rightPaddle;
+    }
+
+    public int getScoreRight() {
+        return scoreRight;
+    }
+
+    public int getScoreLeft() {
+        return scoreLeft;
     }
 }

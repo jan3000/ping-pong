@@ -1,12 +1,15 @@
+import enumeration.Player;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.event.EventHandler;
+import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
@@ -24,6 +27,7 @@ public class Main extends Application {
     private GameService gameService;
     private Text title;
     private Timeline timeline;
+    private Text scoreText;
 
     public static void main(String[] args) {
         launch(args);
@@ -37,8 +41,10 @@ public class Main extends Application {
 
         startTimeline();
         title = new Text("Start");
-        title.setStyle("-fx-min-height: 50px; -fx-font-weight: bold; " +
-                "-fx-text-alignment: center; -fx-background-color: cornflowerblue");
+        scoreText = new Text(getScoreText());
+        HBox titleBox = new HBox(title, scoreText);
+        titleBox.setSpacing(50);
+        titleBox.setAlignment(Pos.CENTER);
         Group group = new Group(gameService.getNodes());
         Pane pane = new Pane(group);
         pane.setStyle("-fx-background-color: lightsteelblue");
@@ -47,13 +53,18 @@ public class Main extends Application {
         pane.setMinHeight(MAX_HEIGHT);
 
         BorderPane borderLayout = new BorderPane();
-        borderLayout.setTop(title);
+        borderLayout.setTop(titleBox);
+
         borderLayout.setCenter(pane);
 
         group.setFocusTraversable(true);
         Scene scene = new Scene(borderLayout, MAX_WIDTH, MAX_HEIGHT + TITLE_HEIGHT);
         stage.setScene(scene);
         stage.show();
+    }
+
+    private String getScoreText() {
+        return String.format("%s - %s", gameService.getScoreLeft(), gameService.getScoreRight());
     }
 
     private EventHandler<KeyEvent> createPaddleKeyEvents() {
@@ -82,9 +93,15 @@ public class Main extends Application {
     private void startTimeline() {
         EventHandler onFinished = event -> {
             gameService.moveBall();
-            if (gameService.isBallCollisionLeft() || gameService.isBallCollisionRight()) {
-                System.out.println("LOOSYYYY!!!!");
-                title.setText("Sweety, you loose!");
+            Player pointMaker = gameService.checkForPoint();
+            if (pointMaker != null) {
+                scoreText.setText(getScoreText());
+                Player winner = gameService.checkForWinner();
+                if (winner != null) {
+                    title.setText(String.format("Waaaaahnsinn!!! The incredible %s wins the whole match!", winner));
+                } else {
+                    title.setText(String.format("Yeahi!!! The incredible %s wins the point!", pointMaker));
+                }
                 timeline.stop();
             }
             ;
