@@ -13,9 +13,13 @@ public class Ball extends Circle {
     private SimpleDoubleProperty yValue = new SimpleDoubleProperty();
     private boolean directionRight = true;
     private boolean directionDown = true;
+    private int initialXValue;
+    private int initialYValue;
 
     public Ball(int xValue, int yValue) {
-        super(10, 10, BALL_RADIUS);
+        super(xValue, yValue, BALL_RADIUS);
+        initialXValue = xValue;
+        initialYValue = yValue;
         this.setFill(Color.BLACK);
         this.xValue.setValue(xValue);
         this.yValue.setValue(yValue);
@@ -24,8 +28,8 @@ public class Ball extends Circle {
     }
 
     public void reset() {
-        xValue.setValue(10);
-        yValue.setValue(10);
+        xValue.setValue(initialXValue);
+        yValue.setValue(initialYValue);
         setDirectionRight(true);
         setDirectionDown(true);
     }

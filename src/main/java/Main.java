@@ -33,7 +33,7 @@ public class Main extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        gameService = new GameService(MAX_HEIGHT, MAX_WIDTH, PADDLE_PADDING, PADDLE_LENGTH);
+        gameService = new GameService(MAX_WIDTH, MAX_HEIGHT, PADDLE_PADDING, PADDLE_LENGTH);
 
         startTimeline();
         title = new Text("Start");
@@ -42,7 +42,7 @@ public class Main extends Application {
         Group group = new Group(gameService.getNodes());
         Pane pane = new Pane(group);
         pane.setStyle("-fx-background-color: lightsteelblue");
-        pane.setOnKeyPressed(createPaddleKeyEvent());
+        pane.setOnKeyPressed(createPaddleKeyEvents());
         pane.setMaxHeight(MAX_HEIGHT);
         pane.setMinHeight(MAX_HEIGHT);
 
@@ -56,22 +56,25 @@ public class Main extends Application {
         stage.show();
     }
 
-    private EventHandler<KeyEvent> createPaddleKeyEvent() {
+    private EventHandler<KeyEvent> createPaddleKeyEvents() {
         return event -> {
-            String key = event.getText();
-            System.out.println(("key: " + key));
-            switch (key) {
-                case "s":
-                    gameService.moveLeftPaddleDown();
-                    break;
-                case "w":
+            switch (event.getCode()) {
+                case W:
                     gameService.moveLeftPaddleUp();
                     break;
-                case "n":
+                case S:
+                    gameService.moveLeftPaddleDown();
+                    break;
+                case UP:
+                    gameService.moveRightPaddleUp();
+                    break;
+                case DOWN:
+                    gameService.moveRightPaddleDown();
+                    break;
+                case N:
                     gameService.reset();
                     title.setText("start again honey");
                     timeline.playFromStart();
-                    break;
             }
         };
     }
@@ -79,7 +82,7 @@ public class Main extends Application {
     private void startTimeline() {
         EventHandler onFinished = event -> {
             gameService.moveBall();
-            if (gameService.isBallLost()) {
+            if (gameService.isBallCollisionLeft() || gameService.isBallCollisionRight()) {
                 System.out.println("LOOSYYYY!!!!");
                 title.setText("Sweety, you loose!");
                 timeline.stop();

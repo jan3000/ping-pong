@@ -13,18 +13,16 @@ public class GameService {
     private Paddle leftPaddle;
     private Paddle rightPaddle;
     private int paddlePadding;
-    private int paddleLength;
     private int maxWidth;
     private int maxHeight;
 
-    public GameService(int height, int width, int paddlePadding, int paddleLength) {
-        this.paddleLength = paddleLength;
+    public GameService(int width, int height, int paddlePadding, int paddleLength) {
         this.paddlePadding = paddlePadding;
         this.maxWidth = width;
         this.maxHeight = height;
         leftPaddle = new Paddle(paddlePadding, height / 2, paddlePadding, height / 2 + paddleLength);
         rightPaddle = new Paddle(width - paddlePadding, height / 2, width - paddlePadding, height / 2 + paddleLength);
-        ball = new Ball(10, 20);
+        ball = new Ball(10, 10);
     }
 
     public List<Node> getNodes() {
@@ -32,13 +30,20 @@ public class GameService {
     }
 
     public void moveBall() {
+        determineBallDirection();
+        ball.move();
+    }
+
+    private void determineBallDirection() {
         if (isLeftPaddleHit()) {
             ball.setDirectionRight(true);
-        } else {
-            ball.setDirectionRight(isHorizontalDirectionRight());
-            ball.setDirectionDown(isVerticalDirectionDown());
+        } else if (isRightPaddleHit()) {
+            ball.setDirectionRight(false);
+        } else if (isBallCollisionTop()) {
+            ball.setDirectionDown(true);
+        } else if (isBallCollisionBottom()) {
+            ball.setDirectionDown(false);
         }
-        ball.move();
     }
 
     public void reset() {
@@ -53,44 +58,40 @@ public class GameService {
         leftPaddle.movePaddleDown(maxHeight);
     }
 
+    public void moveRightPaddleUp() {
+        rightPaddle.movePaddleUp();
+    }
+
+    public void moveRightPaddleDown() {
+        rightPaddle.movePaddleDown(maxHeight);
+    }
+
     private boolean isLeftPaddleHit() {
         if (paddlePadding + ball.getRadius() == ball.getXValue()
                 && ball.getYValue() > leftPaddle.getStartYProperty() - ball.getRadius()
                 && ball.getYValue() < leftPaddle.getEndYProperty() + ball.getRadius()) {
-            System.out.println("HIT!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            System.out.println("HIT Left!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             return true;
         }
         return false;
     }
 
-    private boolean isVerticalDirectionDown() {
-        if (isBallCollisionBottom()) {
-            return false;
-        } else if (isBallCollisionTop()) {
+    private boolean isRightPaddleHit() {
+        if (maxWidth - paddlePadding - ball.getRadius() == ball.getXValue()
+                && ball.getYValue() > rightPaddle.getStartYProperty() - ball.getRadius()
+                && ball.getYValue() < rightPaddle.getEndYProperty() + ball.getRadius()) {
+            System.out.println("HIT right!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             return true;
         }
-        return ball.isDirectionDown();
+        return false;
     }
 
-    private boolean isHorizontalDirectionRight() {
-        if (isBallCollisionRight()) {
-            return false;
-        } else if (isBallCollisionLeft()) {
-            // this is a loose can be removed?
-            return true;
-        }
-        return ball.isDirectionRight();
-    }
 
-    public boolean isBallLost() {
-        return isBallCollisionLeft();
-    }
-
-    private boolean isBallCollisionRight() {
+    public boolean isBallCollisionRight() {
         return ball.isDirectionRight() && ball.getXValue() + 1 >= maxWidth;
     }
 
-    private boolean isBallCollisionLeft() {
+    public boolean isBallCollisionLeft() {
         return !ball.isDirectionRight() && ball.getXValue() - 1 <= 0;
     }
 
@@ -102,5 +103,15 @@ public class GameService {
         return ball.isDirectionDown() && ball.getYValue() + 1 >= maxHeight - ball.getRadius();
     }
 
+    public Ball getBall() {
+        return ball;
+    }
 
+    public Paddle getLeftPaddle() {
+        return leftPaddle;
+    }
+
+    public Paddle getRightPaddle() {
+        return rightPaddle;
+    }
 }
