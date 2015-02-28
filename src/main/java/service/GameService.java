@@ -10,7 +10,7 @@ import java.util.List;
 
 public class GameService {
 
-    public static final int WINNING_SCORE = 10;
+    public static final int WINNING_SCORE = 3;
     private Ball ball;
     private Paddle leftPaddle;
     private Paddle rightPaddle;
@@ -52,8 +52,14 @@ public class GameService {
         }
     }
 
-    public void reset() {
+    public void resetBall() {
         ball.reset();
+    }
+
+    public void startNewGame() {
+        resetBall();
+        scoreLeft = 0;
+        scoreRight = 0;
     }
 
     public void moveLeftPaddleUp() {
