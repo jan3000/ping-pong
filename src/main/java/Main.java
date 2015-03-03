@@ -11,8 +11,8 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Tooltip;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
@@ -27,15 +27,15 @@ public class Main extends Application {
     public static final int PADDLE_PADDING = 30;
     public static final int TITLE_HEIGHT = 50;
     public static final int SPACING = 20;
+    public static final int PLAYGROUND_TEXT_HIEGHT_CORRECTION = 30;
 
     private GameService gameService;
-    private Text titleText;
     private Timeline timeline;
     private Text scoreText;
     private Group playgroundGroup;
     private Pane playgroundPane;
-    private Button startGameButton;
-    private Button stopGameButton;
+    private Button gameButton = new Button();
+    private Text playgroundText = new Text();
 
     public static void main(String[] args) {
         launch(args);
@@ -61,49 +61,45 @@ public class Main extends Application {
 
     private Pane createPlayground() {
         playgroundGroup = new Group(gameService.getNodes());
+        playgroundText.setStyle("-fx-font-weight: bold");
+        setAndLayoutPlaygroundText("Start the hyper fun by pressing 'n'");
+        playgroundText.setY(MAX_HEIGHT / 2 - PLAYGROUND_TEXT_HIEGHT_CORRECTION);
+        playgroundGroup.getChildren().add(playgroundText);
         playgroundPane = new Pane(playgroundGroup);
         return playgroundPane;
     }
 
-    private void startGame() {
-        timeline.play();
-        startGameButton.setDisable(true);
-        stopGameButton.setDisable(false);
+    private void setAndLayoutPlaygroundText(String text) {
+        playgroundText.setText(text);
+        playgroundText.setX(MAX_WIDTH / 2 - playgroundText.getLayoutBounds().getWidth() / 2);
     }
 
-    private void stopGame() {
+    private void startNewGame() {
         timeline.stop();
-        startGameButton.setDisable(false);
-        stopGameButton.setDisable(true);
+        setAndLayoutPlaygroundText("");
+        gameService.startNewGame();
+        scoreText.setText(getScoreText());
+        timeline.play();
     }
 
     private HBox createHeader() {
         VBox buttonVBox = new VBox(5);
-        startGameButton = new Button("Start game");
-        startGameButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-                startGame();
-            }
-        });
-        stopGameButton = new Button("Stop game");
-        stopGameButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-                stopGame();
-            }
-        });
-        stopGameButton.setDisable(true);
-        buttonVBox.getChildren().addAll(startGameButton, stopGameButton);
+        gameButton = new Button("Play");
+        gameButton.setOnMouseClicked(event -> startNewGame());
+        buttonVBox.getChildren().addAll(gameButton);
 
-        titleText = new Text("Start");
+        Button helpButton = new Button("Help");
+        helpButton.setTooltip(new Tooltip("Press 'n' to play new ball"));
+        Text helpText = new Text("help");
+        Tooltip.install(helpText, new Tooltip("n: play new ball"));
         scoreText = new Text(getScoreText());
+        scoreText.setStyle("-fx-font-weight: bold");
         StackPane stackPane = new StackPane(scoreText);
         stackPane.setAlignment(Pos.CENTER_RIGHT);
         HBox titleBox = new HBox(SPACING);
-        titleBox.setStyle("-fx-background-color: cornsilk; -fx-font-smoothing-type: gray; -fx-border-width: 1px; " +
+        titleBox.setStyle("-fx-background-color: lightgrey; -fx-font-smoothing-type: gray; -fx-border-width: 1px; " +
                 "-fx-border-color: gray");
-        titleBox.getChildren().addAll(buttonVBox, stackPane, titleText);
+        titleBox.getChildren().addAll(buttonVBox, helpButton, stackPane);
         HBox.setHgrow(stackPane, Priority.ALWAYS);
         titleBox.setPadding(new Insets(5, 12, 5, 12));
 
@@ -131,7 +127,7 @@ public class Main extends Application {
                     break;
                 case N:
                     gameService.resetBall();
-                    titleText.setText("start again honey");
+                    setAndLayoutPlaygroundText("");
                     timeline.playFromStart();
             }
         };
@@ -146,12 +142,11 @@ public class Main extends Application {
                 scoreText.setText(getScoreText());
                 Player winner = gameService.checkForWinner();
                 if (winner != null) {
-                    titleText.setText(String.format("Waaaaahnsinn!!! The incredible %s wins the whole match!", winner));
+                    setAndLayoutPlaygroundText(String.format("Waaaaahnsinn!!! The incredible %s wins the whole match!", winner));
                     new Alert(Alert.AlertType.INFORMATION, "Winner is " + winner, ButtonType.CLOSE).showAndWait();
                     gameService.startNewGame();
                 } else {
-
-                    titleText.setText(String.format("Yeahi!!! The incredible %s wins the point!", pointMaker));
+                    setAndLayoutPlaygroundText(String.format("Yeahi!!! The incredible %s wins the point! Press 'n' to continue", pointMaker));
                 }
             }
         };

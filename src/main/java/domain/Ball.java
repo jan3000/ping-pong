@@ -6,8 +6,8 @@ import javafx.scene.shape.Circle;
 
 public class Ball extends Circle {
 
-    private static final int HORIZONTAL_STEP = 1;
-    private static final int VERTICAL_STEP = 1;
+    private static final int HORIZONTAL_STEP = 2;
+    private static final int VERTICAL_STEP = 2;
     private static final int BALL_RADIUS = 10;
     private SimpleDoubleProperty xValue = new SimpleDoubleProperty();
     private SimpleDoubleProperty yValue = new SimpleDoubleProperty();
@@ -20,7 +20,7 @@ public class Ball extends Circle {
         super(xValue, yValue, BALL_RADIUS);
         initialXValue = xValue;
         initialYValue = yValue;
-        this.setFill(Color.BLACK);
+        this.setFill(Color.RED);
         this.xValue.setValue(xValue);
         this.yValue.setValue(yValue);
         this.centerXProperty().bind(this.xValue);

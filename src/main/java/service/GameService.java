@@ -26,7 +26,7 @@ public class GameService {
         this.maxHeight = height;
         leftPaddle = new Paddle(paddlePadding, height / 2, paddlePadding, height / 2 + paddleLength);
         rightPaddle = new Paddle(width - paddlePadding, height / 2, width - paddlePadding, height / 2 + paddleLength);
-        ball = new Ball(10, 10);
+        ball = new Ball(width / 2, height / 2);
         scoreLeft = 0;
         scoreRight = 0;
     }
